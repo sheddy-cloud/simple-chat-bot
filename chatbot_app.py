@@ -107,7 +107,7 @@ def get_bot_response(user_input):
 # Streamlit UI
 # --------------------------
 def main():
-    st.title(" Massaburi Chatbot🤖")
+    st.title(" Massaburi Chatbot😁")
     st.write("Welcome! Type something to start chatting.")
 
     user_input = st.text_input("You:")
