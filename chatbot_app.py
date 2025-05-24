@@ -1,7 +1,6 @@
 import streamlit as st
 from openai import OpenAI
 import random
-from openai.error import RateLimitError
 
 # Your chatbot intents (simplified, add all your intents here)
 intents = [
@@ -93,14 +92,15 @@ def get_openai_response(messages):
             messages=messages
         )
         return response.choices[0].message.content.strip()
-    except RateLimitError:
-        # On rate limit error, fallback to old intents chatbot
-        user_message = messages[-1]["content"]  # last user input
-        fallback = fallback_response(user_message)
-        return "⚠️ (Fallback mode) " + fallback
     except Exception as e:
-        # Generic fallback for other errors
-        return "⚠️ Sorry, something went wrong. Please try again later."
+        err_str = str(e).lower()
+        # crude rate limit detection
+        if "rate limit" in err_str or "ratelimit" in err_str or "too many requests" in err_str:
+            user_message = messages[-1]["content"]
+            fallback = fallback_response(user_message)
+            return "⚠️ (Fallback mode) " + fallback
+        else:
+            return "⚠️ Sorry, something went wrong. Please try again later."
 
 # Chat input form at bottom
 with st.form(key="chat_form"):
