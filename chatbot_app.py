@@ -6,7 +6,7 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # Streamlit setup
 st.set_page_config(page_title="Massaburi Chatbot", layout="centered")
-st.title("🤖 Massaburi Chatbot")
+st.title("Massaburi Chatbot😁")
 
 # Custom CSS for ChatGPT-style input
 st.markdown("""
