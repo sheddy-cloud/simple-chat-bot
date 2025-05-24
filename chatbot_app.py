@@ -1,46 +1,46 @@
 import streamlit as st
 import random
 
-# Define chatbot intents
+# ---- Chatbot Intents ----
 intents = [
     {
         "tag": "greeting",
-        "patterns": ["Hi", "Hello", "Hey", "How are you", "What's up"],
+        "patterns": ["hi", "hello", "hey", "how are you", "what's up"],
         "responses": ["Hi there!", "Hello!", "Hey!", "I'm fine, thank you.", "Not much!"]
     },
     {
         "tag": "goodbye",
-        "patterns": ["Bye", "See you later", "Goodbye", "Take care"],
+        "patterns": ["bye", "see you later", "goodbye", "take care"],
         "responses": ["Goodbye!", "See you later!", "Take care!"]
     },
     {
         "tag": "thanks",
-        "patterns": ["Thank you", "Thanks", "Thanks a lot", "I appreciate it"],
+        "patterns": ["thank you", "thanks", "thanks a lot", "i appreciate it"],
         "responses": ["You're welcome!", "No problem!", "Glad I could help!"]
     },
     {
         "tag": "about",
-        "patterns": ["What can you do", "Who are you", "What are you", "What is your purpose"],
+        "patterns": ["what can you do", "who are you", "what are you", "what is your purpose"],
         "responses": ["I'm a chatbot.", "I assist with simple tasks.", "I'm here to help!"]
     },
     {
         "tag": "help",
-        "patterns": ["Help", "I need help", "Can you help me", "What should I do"],
+        "patterns": ["help", "i need help", "can you help me", "what should i do"],
         "responses": ["Sure, what do you need help with?", "I'm here to help. What's the problem?"]
     },
     {
         "tag": "age",
-        "patterns": ["How old are you", "What's your age"],
+        "patterns": ["how old are you", "what's your age"],
         "responses": ["I don't have an age—I'm a bot!", "Age is just a number. Especially for me!"]
     },
     {
         "tag": "weather",
-        "patterns": ["What's the weather like", "How's the weather today"],
+        "patterns": ["what's the weather like", "how's the weather today"],
         "responses": ["I can't provide real-time weather. Try a weather app!", "Check a weather site for live updates."]
     },
     {
         "tag": "budget",
-        "patterns": ["How can I make a budget", "What's a good budgeting strategy", "How do I create a budget"],
+        "patterns": ["how can i make a budget", "what's a good budgeting strategy", "how do i create a budget"],
         "responses": [
             "Start by tracking your income and expenses.",
             "Try the 50/30/20 rule: 50% needs, 30% wants, 20% savings.",
@@ -49,7 +49,7 @@ intents = [
     },
     {
         "tag": "credit_score",
-        "patterns": ["What is a credit score", "How do I check my credit score", "How can I improve my credit score"],
+        "patterns": ["what is a credit score", "how do i check my credit score", "how can i improve my credit score"],
         "responses": [
             "A credit score shows your creditworthiness.",
             "You can check your score on sites like Credit Karma.",
@@ -58,86 +58,49 @@ intents = [
     }
 ]
 
-def fallback_response(user_input):
-    user_input_lower = user_input.lower()
+# ---- Fallback Response Logic ----
+def get_response(user_input):
+    user_input = user_input.lower()
     for intent in intents:
         for pattern in intent["patterns"]:
-            if pattern.lower() in user_input_lower:
+            if pattern in user_input:
                 return random.choice(intent["responses"])
     return "Sorry, I didn't understand that."
 
+# ---- Streamlit UI Setup ----
 st.set_page_config(page_title="Massaburi Chatbot", layout="centered")
-st.title("Massaburi Chatbot😁")
-st.markdown(
-    """
-    <style>
-    footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+st.title("Massaburi Chatbot 😁")
 
-# CSS for chat input like ChatGPT
+# Hide Streamlit branding, menu, and footer
 st.markdown("""
     <style>
-    .chat-input-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 12px;
-        background-color: white;
-        border-top: 1px solid #eee;
-        z-index: 9999;
-    }
-    .chat-input-container textarea {
-        width: 100%;
-        padding: 12px;
-        font-size: 16px;
-        border-radius: 10px;
-        border: 1px solid #ccc;
-        resize: none;
-        height: 60px;
-    }
-    .block-container {
-        padding-bottom: 120px;
-    }
+    #MainMenu, footer, header {visibility: hidden;}
+    .block-container {padding-bottom: 150px;}
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize chat history in session state
+# ---- Chat State ----
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Hi! I'm Massaburi, your friendly chatbot. Ask me anything!"}
     ]
 
-# Display chat messages
+# ---- Display Chat History ----
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Chat input form at bottom
-with st.form(key="chat_form"):
-    st.markdown('<div class="chat-input-container">', unsafe_allow_html=True)
-    user_input = st.text_area("You:", label_visibility="collapsed", key="input_box")
-    submitted = st.form_submit_button("Send")
-    st.markdown('</div>', unsafe_allow_html=True)
+# ---- Chat Input ----
+user_input = st.chat_input("Say something...")
 
-if submitted and user_input.strip():
-    # Add user message
+if user_input:
+    # Display user message
+    st.chat_message("user").markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # Get fallback chatbot response
-    response = fallback_response(user_input)
+    # Generate response
+    response = get_response(user_input)
 
-    # Show chatbot response
-    with st.chat_message("assistant"):
-        st.markdown(response)
-
-    # Append assistant message to chat history
+    # Display bot response
+    st.chat_message("assistant").markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
-
-    # Rerun to update UI
-    st.experimental_rerun()
