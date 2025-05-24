@@ -1,11 +1,51 @@
 import streamlit as st
 from openai import OpenAI
+import random
+from openai.error import RateLimitError
+
+# Your chatbot intents (simplified, add all your intents here)
+intents = [
+    {
+        "tag": "greeting",
+        "patterns": ["Hi", "Hello", "Hey", "How are you", "What's up"],
+        "responses": ["Hi there!", "Hello!", "Hey!", "I'm fine, thank you.", "Not much!"]
+    },
+    {
+        "tag": "goodbye",
+        "patterns": ["Bye", "See you later", "Goodbye", "Take care"],
+        "responses": ["Goodbye!", "See you later!", "Take care!"]
+    },
+    {
+        "tag": "thanks",
+        "patterns": ["Thank you", "Thanks", "Thanks a lot", "I appreciate it"],
+        "responses": ["You're welcome!", "No problem!", "Glad I could help!"]
+    },
+    # Add more intents here as needed...
+]
+
+# Fallback function for your old intents-based responses
+def fallback_response(user_input):
+    for intent in intents:
+        for pattern in intent["patterns"]:
+            if pattern.lower() in user_input.lower():
+                return random.choice(intent["responses"])
+    return "Sorry, I didn't understand that."
 
 # Initialize OpenAI client with API key from Streamlit secrets
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Massaburi Chatbot", layout="centered")
 st.title("Massaburi Chatbot😁")
+st.markdown(
+    """
+    <style>
+    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # CSS for chat input like ChatGPT
 st.markdown("""
@@ -47,11 +87,20 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 def get_openai_response(messages):
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+        return response.choices[0].message.content.strip()
+    except RateLimitError:
+        # On rate limit error, fallback to old intents chatbot
+        user_message = messages[-1]["content"]  # last user input
+        fallback = fallback_response(user_message)
+        return "⚠️ (Fallback mode) " + fallback
+    except Exception as e:
+        # Generic fallback for other errors
+        return "⚠️ Sorry, something went wrong. Please try again later."
 
 # Chat input form at bottom
 with st.form(key="chat_form"):
