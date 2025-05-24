@@ -1,14 +1,13 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 
-# Load API key from Streamlit secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Initialize OpenAI client with API key from Streamlit secrets
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Streamlit setup
 st.set_page_config(page_title="Massaburi Chatbot", layout="centered")
 st.title("Massaburi Chatbot😁")
 
-# Custom CSS for ChatGPT-style input
+# CSS for chat input like ChatGPT
 st.markdown("""
     <style>
     .chat-input-container {
@@ -36,38 +35,43 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Session state for messages
+# Initialize chat history in session state
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Hi! I'm Massaburi, your friendly chatbot. Ask me anything!"}
     ]
 
-# Display conversation history
+# Display chat messages
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# GPT-based response function
 def get_openai_response(messages):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # You can also use gpt-4 if available
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=messages
     )
     return response.choices[0].message.content.strip()
 
-# Custom input area
+# Chat input form at bottom
 with st.form(key="chat_form"):
     st.markdown('<div class="chat-input-container">', unsafe_allow_html=True)
     user_input = st.text_area("You:", label_visibility="collapsed", key="input_box")
     submitted = st.form_submit_button("Send")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Handle user input
 if submitted and user_input.strip():
+    # Add user message
     st.session_state.messages.append({"role": "user", "content": user_input})
+
+    # Get assistant response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = get_openai_response(st.session_state.messages)
             st.markdown(response)
+
+    # Append assistant message to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # Rerun app to refresh messages
     st.experimental_rerun()
